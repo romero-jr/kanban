@@ -8,47 +8,22 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: #0a0a0a; color: #39ff14; font-family: 'Inter', -apple-system, sans-serif; user-select: none; overflow: hidden; }
-
   body::before { content: ''; position: fixed; width: 500px; height: 500px; background: radial-gradient(circle, rgba(57,255,20,0.07) 0%, transparent 70%); top: -150px; left: -100px; pointer-events: none; z-index: 0; }
   body::after  { content: ''; position: fixed; width: 400px; height: 400px; background: radial-gradient(circle, rgba(57,255,20,0.05) 0%, transparent 70%); bottom: -100px; right: 0; pointer-events: none; z-index: 0; }
 
   /* ── TITLEBAR ── */
-  #titlebar {
-    -webkit-app-region: drag;
-    height: 40px; display: flex; align-items: center; justify-content: space-between;
-    padding: 0 16px;
-    border-bottom: 0.5px solid rgba(57,255,20,0.1);
-    flex-shrink: 0; position: relative; z-index: 10;
-  }
-  #titlebar .tb-title { font-size: 13px; font-weight: 600; color: rgba(57,255,20,0.45); letter-spacing: 0.5px; flex: 1; text-align: center; }
-  #titlebar .tb-left, #titlebar .tb-right { width: 80px; display: flex; align-items: center; }
-  #titlebar .tb-right { justify-content: flex-end; }
-
-  /* ── SYNC STATUS ── */
-  #syncStatus {
-    -webkit-app-region: no-drag;
-    display: flex; align-items: center; gap: 6px;
-    font-size: 11px; font-weight: 500; color: rgba(57,255,20,0.45);
-    cursor: default;
-  }
-  #syncDot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: rgba(57,255,20,0.3);
-    transition: background 0.3s;
-    flex-shrink: 0;
-  }
+  #titlebar { -webkit-app-region: drag; height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 0.5px solid rgba(57,255,20,0.1); flex-shrink: 0; position: relative; z-index: 10; }
+  .tb-title { font-size: 13px; font-weight: 600; color: rgba(57,255,20,0.45); letter-spacing: 0.5px; flex: 1; text-align: center; }
+  .tb-left, .tb-right { width: 120px; display: flex; align-items: center; gap: 10px; }
+  .tb-right { justify-content: flex-end; }
+  #syncStatus { -webkit-app-region: no-drag; display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; color: rgba(57,255,20,0.45); }
+  #syncDot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: background 0.3s; flex-shrink: 0; }
   #syncDot.syncing  { background: #facc15; box-shadow: 0 0 6px #facc1580; }
   #syncDot.synced   { background: #39ff14; box-shadow: 0 0 6px rgba(57,255,20,0.5); }
   #syncDot.error    { background: #f87171; box-shadow: 0 0 6px #f8717180; }
   #syncDot.no-config { background: rgba(255,255,255,0.15); }
-
-  /* ── SETTINGS BUTTON ── */
-  #settingsBtn {
-    -webkit-app-region: no-drag;
-    background: transparent; border: none; color: rgba(57,255,20,0.35);
-    cursor: pointer; font-size: 16px; padding: 4px; line-height: 1;
-  }
-  #settingsBtn:hover { color: #39ff14; }
+  .tb-icon-btn { -webkit-app-region: no-drag; background: transparent; border: none; color: rgba(57,255,20,0.35); cursor: pointer; font-size: 15px; padding: 4px 6px; line-height: 1; border-radius: 6px; }
+  .tb-icon-btn:hover { color: #39ff14; background: rgba(57,255,20,0.08); }
 
   /* ── LAYOUT ── */
   #app { display: flex; flex-direction: column; height: 100vh; position: relative; z-index: 1; }
@@ -57,12 +32,9 @@
   .section-label { display: flex; align-items: center; gap: 10px; padding: 0 20px; margin-bottom: 12px; }
   .section-label::before { content: ''; display: block; width: 20px; height: 1.5px; background: #39ff14; opacity: 0.5; }
   .section-label span { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; color: rgba(57,255,20,0.45); text-transform: uppercase; }
-
   #board { flex: 1; overflow-x: auto; overflow-y: hidden; display: flex; gap: 14px; padding: 0 20px 20px; align-items: flex-start; }
   #board::-webkit-scrollbar { height: 4px; }
   #board::-webkit-scrollbar-thumb { background: rgba(57,255,20,0.2); border-radius: 4px; }
-
-  /* ── BUTTONS ── */
   .btn-add-col { background: rgba(57,255,20,0.08); border: 0.5px solid rgba(57,255,20,0.4); color: #39ff14; padding: 7px 16px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; font-family: 'Inter', sans-serif; -webkit-app-region: no-drag; }
   .btn-add-col:hover { background: rgba(57,255,20,0.15); }
 
@@ -72,19 +44,27 @@
   .col-header-top { display: flex; align-items: center; justify-content: space-between; }
   .col-title { font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1.5px; text-transform: uppercase; }
   .col-count { font-size: 11px; font-weight: 400; color: rgba(57,255,20,0.4); margin-top: 4px; }
-  .col-del { background: transparent; border: none; color: rgba(57,255,20,0.22); cursor: pointer; font-size: 14px; padding: 2px 4px; line-height: 1; }
-  .col-del:hover { color: #ff4444; }
+  .col-actions { display: flex; gap: 4px; align-items: center; }
+  .col-btn { background: transparent; border: none; color: rgba(57,255,20,0.22); cursor: pointer; font-size: 13px; padding: 2px 5px; line-height: 1; border-radius: 4px; }
+  .col-btn:hover { color: #39ff14; background: rgba(57,255,20,0.08); }
+  .col-btn.archive-all { font-size: 11px; font-weight: 600; color: rgba(57,255,20,0.3); }
+  .col-btn.archive-all:hover { color: #39ff14; }
+  .col-btn.del:hover { color: #ff4444; background: rgba(255,68,68,0.08); }
   .cards { padding: 10px; display: flex; flex-direction: column; gap: 7px; overflow-y: auto; flex: 1; min-height: 50px; }
   .cards::-webkit-scrollbar { width: 3px; }
   .cards::-webkit-scrollbar-thumb { background: rgba(57,255,20,0.15); border-radius: 3px; }
 
   /* ── CARDS ── */
-  .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 0.5px solid rgba(255,255,255,0.09); border-radius: 13px; padding: 12px; cursor: grab; position: relative; transition: border-color 0.15s, background 0.15s; }
-  .card:active { cursor: grabbing; }
+  .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 0.5px solid rgba(255,255,255,0.09); border-radius: 13px; padding: 12px; position: relative; transition: border-color 0.15s, background 0.15s; }
   .card:hover { border-color: rgba(57,255,20,0.35); background: rgba(57,255,20,0.06); }
   .card.dragging { opacity: 0.3; }
-  .card-title { font-size: 13px; font-weight: 400; color: #ddd; line-height: 1.5; padding-right: 22px; }
-  .card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .card-drag-handle { position: absolute; top: 10px; left: 10px; color: rgba(57,255,20,0.15); font-size: 11px; cursor: grab; line-height: 1; }
+  .card-drag-handle:active { cursor: grabbing; }
+  .card:hover .card-drag-handle { color: rgba(57,255,20,0.35); }
+  .card-title { font-size: 13px; font-weight: 500; color: #ddd; line-height: 1.5; padding: 0 22px 0 18px; cursor: pointer; }
+  .card-title:hover { color: #fff; }
+  .card-desc-hint { font-size: 11px; color: rgba(255,255,255,0.2); margin-top: 4px; padding-left: 18px; font-style: italic; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; padding-left: 18px; }
   .tag { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; letter-spacing: 0.4px; }
   .card-edit { position: absolute; top: 9px; right: 9px; background: transparent; border: none; color: rgba(57,255,20,0.2); cursor: pointer; font-size: 13px; }
   .card-edit:hover { color: #39ff14; }
@@ -94,11 +74,11 @@
   .btn-add-card:hover { border-color: rgba(57,255,20,0.5); color: #39ff14; background: rgba(57,255,20,0.05); }
 
   /* ── OVERLAYS ── */
-  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
   .overlay.open { display: flex; }
 
-  /* ── MODAL (card / column) ── */
-  .modal { background: rgba(12,12,12,0.96); border: 0.5px solid rgba(57,255,20,0.28); border-radius: 20px; padding: 24px; width: 340px; max-width: 90vw; }
+  /* ── MODALS ── */
+  .modal { background: rgba(12,12,12,0.97); border: 0.5px solid rgba(57,255,20,0.28); border-radius: 20px; padding: 24px; width: 380px; max-width: 92vw; }
   .modal h2 { font-size: 16px; font-weight: 700; color: #39ff14; margin-bottom: 20px; letter-spacing: -0.3px; }
   .field { margin-bottom: 14px; }
   .field label { font-size: 10px; font-weight: 700; color: rgba(57,255,20,0.45); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1.5px; }
@@ -119,67 +99,122 @@
   .btn-save:hover { background: rgba(57,255,20,0.2); }
   .btn-cancel { background: transparent; border: 0.5px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.38); }
   .btn-cancel:hover { background: rgba(255,255,255,0.05); color: #fff; }
-  .btn-delete { background: transparent; border: 0.5px solid rgba(255,68,68,0.28); color: rgba(255,68,68,0.55); }
-  .btn-delete:hover { background: rgba(255,68,68,0.08); color: #ff4444; border-color: #ff4444; }
+  .btn-danger { background: transparent; border: 0.5px solid rgba(255,68,68,0.28); color: rgba(255,68,68,0.55); }
+  .btn-danger:hover { background: rgba(255,68,68,0.08); color: #ff4444; border-color: #ff4444; }
+
+  /* ── CARD DETAIL VIEW ── */
+  #detailModal .modal { width: 480px; }
+  .detail-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .detail-col-badge { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: rgba(57,255,20,0.5); background: rgba(57,255,20,0.08); border: 0.5px solid rgba(57,255,20,0.2); padding: 3px 10px; border-radius: 20px; }
+  .detail-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 12px; line-height: 1.4; letter-spacing: -0.3px; }
+  .detail-desc { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.55); line-height: 1.7; margin-bottom: 16px; white-space: pre-wrap; }
+  .detail-desc.empty { font-style: italic; color: rgba(255,255,255,0.2); }
+  .detail-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; }
+  .detail-actions { display: flex; gap: 8px; }
+  .detail-actions button { padding: 9px 16px; border-radius: 12px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; }
+  .btn-edit-card  { background: rgba(57,255,20,0.1); border: 0.5px solid rgba(57,255,20,0.35); color: #39ff14; flex: 1; }
+  .btn-edit-card:hover { background: rgba(57,255,20,0.18); }
+  .btn-archive-card { background: transparent; border: 0.5px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); }
+  .btn-archive-card:hover { background: rgba(255,255,255,0.05); color: #fff; }
+
+  /* ── ARCHIVE PANEL ── */
+  #archivePanel { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.82); backdrop-filter: blur(8px); }
+  #archivePanel.open { display: flex; }
+  .archive-box { background: rgba(10,10,10,0.98); border: 0.5px solid rgba(57,255,20,0.25); border-radius: 24px; width: 600px; max-width: 94vw; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
+  .archive-header { padding: 20px 24px 16px; border-bottom: 0.5px solid rgba(57,255,20,0.1); flex-shrink: 0; }
+  .archive-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .archive-header h2 { font-size: 17px; font-weight: 700; color: #39ff14; letter-spacing: -0.3px; }
+  .archive-close { background: transparent; border: none; color: rgba(57,255,20,0.35); cursor: pointer; font-size: 20px; line-height: 1; }
+  .archive-close:hover { color: #39ff14; }
+  .archive-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .archive-search { flex: 1; min-width: 160px; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.1); border-radius: 10px; color: #eee; padding: 8px 12px; font-size: 12px; font-family: 'Inter', sans-serif; outline: none; }
+  .archive-search:focus { border-color: rgba(57,255,20,0.35); }
+  .archive-search::placeholder { color: rgba(255,255,255,0.2); }
+  .archive-filter-select { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.1); border-radius: 10px; color: rgba(255,255,255,0.6); padding: 8px 10px; font-size: 12px; font-family: 'Inter', sans-serif; outline: none; cursor: pointer; }
+  .archive-filter-select:focus { border-color: rgba(57,255,20,0.35); }
+  .archive-filter-select option { background: #111; }
+  .archive-body { flex: 1; overflow-y: auto; padding: 16px 24px; }
+  .archive-body::-webkit-scrollbar { width: 4px; }
+  .archive-body::-webkit-scrollbar-thumb { background: rgba(57,255,20,0.2); border-radius: 4px; }
+  .archive-empty { text-align: center; padding: 48px 0; color: rgba(255,255,255,0.2); font-size: 13px; }
+  .archive-card { background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 14px; }
+  .archive-card:hover { border-color: rgba(57,255,20,0.2); }
+  .archive-card-body { flex: 1; min-width: 0; }
+  .archive-card-title { font-size: 13px; font-weight: 500; color: #ccc; margin-bottom: 5px; }
+  .archive-card-desc { font-size: 12px; color: rgba(255,255,255,0.3); margin-bottom: 8px; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .archive-card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .archive-card-col { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(57,255,20,0.4); }
+  .archive-card-date { font-size: 10px; color: rgba(255,255,255,0.2); }
+  .archive-card-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .archive-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-restore { background: rgba(57,255,20,0.08); border: 0.5px solid rgba(57,255,20,0.3); color: #39ff14; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600; font-family: 'Inter', sans-serif; white-space: nowrap; }
+  .btn-restore:hover { background: rgba(57,255,20,0.15); }
+  .btn-perm-delete { background: transparent; border: 0.5px solid rgba(255,68,68,0.2); color: rgba(255,68,68,0.4); padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600; font-family: 'Inter', sans-serif; }
+  .btn-perm-delete:hover { background: rgba(255,68,68,0.08); color: #ff4444; border-color: #ff4444; }
+  .archive-footer { padding: 14px 24px; border-top: 0.5px solid rgba(57,255,20,0.1); display: flex; justify-content: flex-end; flex-shrink: 0; }
+  .btn-clear-archive { background: transparent; border: 0.5px solid rgba(255,68,68,0.2); color: rgba(255,68,68,0.4); padding: 8px 16px; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: 600; font-family: 'Inter', sans-serif; }
+  .btn-clear-archive:hover { background: rgba(255,68,68,0.08); color: #ff4444; border-color: #ff4444; }
 
   /* ── SETTINGS PANEL ── */
-  #settingsPanel {
-    position: fixed; inset: 0; z-index: 200;
-    display: none; align-items: center; justify-content: center;
-    background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
-  }
+  #settingsPanel { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); }
   #settingsPanel.open { display: flex; }
-  .settings-box {
-    background: rgba(10,10,10,0.98); border: 0.5px solid rgba(57,255,20,0.3);
-    border-radius: 24px; padding: 28px; width: 460px; max-width: 92vw;
-  }
+  .settings-box { background: rgba(10,10,10,0.98); border: 0.5px solid rgba(57,255,20,0.3); border-radius: 24px; padding: 28px; width: 460px; max-width: 92vw; }
   .settings-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
   .settings-header h2 { font-size: 17px; font-weight: 700; color: #39ff14; letter-spacing: -0.3px; }
   .settings-close { background: transparent; border: none; color: rgba(57,255,20,0.35); cursor: pointer; font-size: 20px; line-height: 1; }
   .settings-close:hover { color: #39ff14; }
-
-  .settings-section { margin-bottom: 24px; }
   .settings-section-title { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: rgba(57,255,20,0.4); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
   .settings-section-title::after { content: ''; flex: 1; height: 0.5px; background: rgba(57,255,20,0.15); }
-
   .setting-row { margin-bottom: 12px; }
   .setting-row label { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.5); display: block; margin-bottom: 6px; }
   .setting-row input { width: 100%; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.1); border-radius: 10px; color: #eee; padding: 10px 12px; font-size: 13px; font-family: 'Inter', sans-serif; outline: none; }
   .setting-row input:focus { border-color: rgba(57,255,20,0.4); }
   .setting-row input::placeholder { color: rgba(255,255,255,0.15); }
-
-  .setting-hint { font-size: 11px; font-weight: 400; color: rgba(255,255,255,0.25); margin-top: 5px; line-height: 1.5; }
-  .setting-hint a { color: rgba(57,255,20,0.5); cursor: pointer; text-decoration: underline; }
-
+  .setting-hint { font-size: 11px; color: rgba(255,255,255,0.25); margin-top: 5px; line-height: 1.5; }
+  .setting-hint span { color: rgba(57,255,20,0.5); cursor: pointer; text-decoration: underline; }
   .settings-actions { display: flex; gap: 10px; margin-top: 8px; }
-  .settings-actions button { padding: 10px 16px; border-radius: 12px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; }
-  .btn-test { background: transparent; border: 0.5px solid rgba(57,255,20,0.3); color: rgba(57,255,20,0.7); flex: 1; }
-  .btn-test:hover { background: rgba(57,255,20,0.08); color: #39ff14; }
-  .btn-create-gist { background: transparent; border: 0.5px solid rgba(57,255,20,0.3); color: rgba(57,255,20,0.7); flex: 1; }
-  .btn-create-gist:hover { background: rgba(57,255,20,0.08); color: #39ff14; }
-  .btn-settings-save { background: rgba(57,255,20,0.12); border: 0.5px solid rgba(57,255,20,0.45); color: #39ff14; flex: 1; }
+  .settings-actions button { padding: 10px 16px; border-radius: 12px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; flex: 1; }
+  .btn-outline-green { background: transparent; border: 0.5px solid rgba(57,255,20,0.3); color: rgba(57,255,20,0.7); }
+  .btn-outline-green:hover { background: rgba(57,255,20,0.08); color: #39ff14; }
+  .btn-settings-save { background: rgba(57,255,20,0.12); border: 0.5px solid rgba(57,255,20,0.45); color: #39ff14; }
   .btn-settings-save:hover { background: rgba(57,255,20,0.2); }
-
   .status-msg { font-size: 12px; font-weight: 500; margin-top: 12px; padding: 10px 14px; border-radius: 10px; display: none; }
-  .status-msg.ok    { background: rgba(57,255,20,0.08); border: 0.5px solid rgba(57,255,20,0.25); color: #39ff14; display: block; }
-  .status-msg.err   { background: rgba(248,113,113,0.08); border: 0.5px solid rgba(248,113,113,0.25); color: #f87171; display: block; }
-  .status-msg.info  { background: rgba(56,189,248,0.08); border: 0.5px solid rgba(56,189,248,0.25); color: #38bdf8; display: block; }
+  .status-msg.ok   { background: rgba(57,255,20,0.08); border: 0.5px solid rgba(57,255,20,0.25); color: #39ff14; display: block; }
+  .status-msg.err  { background: rgba(248,113,113,0.08); border: 0.5px solid rgba(248,113,113,0.25); color: #f87171; display: block; }
+  .status-msg.info { background: rgba(56,189,248,0.08); border: 0.5px solid rgba(56,189,248,0.25); color: #38bdf8; display: block; }
 
-  /* ── SYNC TOAST ── */
-  #toast {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: rgba(12,12,12,0.95); border: 0.5px solid rgba(57,255,20,0.25);
-    border-radius: 12px; padding: 10px 18px;
-    font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.7);
-    z-index: 300; opacity: 0; transition: opacity 0.3s;
-    pointer-events: none; white-space: nowrap;
+  /* ── QUIT SYNC OVERLAY ── */
+  #quitOverlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.92); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
+  #quitOverlay.open { display: flex; }
+  #quitOverlay p { font-size: 14px; font-weight: 500; color: rgba(57,255,20,0.7); letter-spacing: 0.5px; }
+
+  /* staircase animation */
+  .stair-svg { width: 56px; height: 56px; }
+  .stair-dot-bg { fill: #ffffff; opacity: 0.07; }
+  .stair-l { fill: #39ff14; opacity: 0; animation: stair-pulse 2200ms cubic-bezier(0.25,1,0.5,1) infinite both; }
+  @keyframes stair-pulse {
+    0%   { opacity: 0.08; }
+    14%  { opacity: 1; }
+    72%  { opacity: 0.95; }
+    100% { opacity: 0.08; }
   }
+  .d04 { animation-delay: 1956ms; }
+  .d13 { animation-delay: 1467ms; }
+  .d14 { animation-delay: 1711ms; }
+  .d22 { animation-delay: 978ms; }
+  .d23 { animation-delay: 1222ms; }
+  .d31 { animation-delay: 489ms; }
+  .d32 { animation-delay: 733ms; }
+  .d40 { animation-delay: 0ms; }
+  .d41 { animation-delay: 244ms; }
+
+  /* ── TOAST ── */
+  #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(12,12,12,0.95); border: 0.5px solid rgba(57,255,20,0.25); border-radius: 12px; padding: 10px 18px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.7); z-index: 300; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
   #toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 <div id="app">
-
   <div id="titlebar">
     <div class="tb-left">
       <div id="syncStatus">
@@ -189,7 +224,8 @@
     </div>
     <div class="tb-title">kanban</div>
     <div class="tb-right">
-      <button id="settingsBtn" onclick="openSettings()" title="Sync Settings">⚙</button>
+      <button class="tb-icon-btn" onclick="openArchive()" title="Archive">◫</button>
+      <button class="tb-icon-btn" onclick="openSettings()" title="Settings">⚙</button>
     </div>
   </div>
 
@@ -201,13 +237,17 @@
   <div id="board"></div>
 </div>
 
-<!-- Card Modal -->
+<!-- Card Edit Modal -->
 <div class="overlay" id="cardModal">
   <div class="modal">
     <h2 id="cardModalTitle">New Card</h2>
     <div class="field">
       <label>Title</label>
-      <textarea id="cardTitle" rows="2" placeholder="What needs doing?"></textarea>
+      <input type="text" id="cardTitle" placeholder="What needs doing?"/>
+    </div>
+    <div class="field">
+      <label>Description <span style="font-size:10px;color:rgba(255,255,255,0.2);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+      <textarea id="cardDesc" rows="4" placeholder="Add more details, links, notes…"></textarea>
     </div>
     <div class="field">
       <label>Categories</label>
@@ -220,8 +260,25 @@
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeCardModal()">Cancel</button>
-      <button class="btn-delete" id="deleteCardBtn" onclick="deleteCard()" style="display:none">Delete</button>
+      <button class="btn-danger" id="deleteCardBtn" onclick="deleteCard()" style="display:none">Delete</button>
       <button class="btn-save" onclick="saveCard()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Card Detail View -->
+<div class="overlay" id="detailModal">
+  <div class="modal" style="width:480px">
+    <div class="detail-meta">
+      <span class="detail-col-badge" id="detailColBadge"></span>
+    </div>
+    <div class="detail-title" id="detailTitle"></div>
+    <div class="detail-desc" id="detailDesc"></div>
+    <div class="detail-tags" id="detailTags"></div>
+    <div class="detail-actions">
+      <button class="btn-cancel" onclick="closeDetail()">Close</button>
+      <button class="btn-archive-card" onclick="archiveFromDetail()">Archive</button>
+      <button class="btn-edit-card" onclick="editFromDetail()">Edit Card</button>
     </div>
   </div>
 </div>
@@ -241,6 +298,30 @@
   </div>
 </div>
 
+<!-- Archive Panel -->
+<div id="archivePanel">
+  <div class="archive-box">
+    <div class="archive-header">
+      <div class="archive-header-top">
+        <h2>Archive</h2>
+        <button class="archive-close" onclick="closeArchive()">✕</button>
+      </div>
+      <div class="archive-filters">
+        <input class="archive-search" id="archiveSearch" placeholder="Search archived cards…" oninput="renderArchive()"/>
+        <select class="archive-filter-select" id="archiveDateFilter" onchange="renderArchive()">
+          <option value="all">All time</option>
+          <option value="week">This week</option>
+          <option value="month">This month</option>
+        </select>
+      </div>
+    </div>
+    <div class="archive-body" id="archiveBody"></div>
+    <div class="archive-footer">
+      <button class="btn-clear-archive" onclick="clearArchive()">Clear Entire Archive</button>
+    </div>
+  </div>
+</div>
+
 <!-- Settings Panel -->
 <div id="settingsPanel">
   <div class="settings-box">
@@ -248,80 +329,100 @@
       <h2>⚙ Sync Settings</h2>
       <button class="settings-close" onclick="closeSettings()">✕</button>
     </div>
-
-    <div class="settings-section">
-      <div class="settings-section-title">GitHub Gist Sync</div>
-
-      <div class="setting-row">
-        <label>Personal Access Token</label>
-        <input type="password" id="sToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/>
-        <div class="setting-hint">
-          Generate one at <span class="setting-hint a" onclick="openGitHub()">github.com → Settings → Developer settings → Personal access tokens</span>. Only needs the <strong>gist</strong> scope.
-        </div>
-      </div>
-
-      <div class="setting-row">
-        <label>Gist ID</label>
-        <input type="text" id="sGistId" placeholder="abc123def456..."/>
-        <div class="setting-hint">
-          The ID from your Gist URL: gist.github.com/username/<strong>THIS_PART</strong>. Or click "Create Gist" below to make one automatically.
-        </div>
-      </div>
+    <div class="settings-section-title">GitHub Gist Sync</div>
+    <div class="setting-row">
+      <label>Personal Access Token</label>
+      <input type="password" id="sToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/>
+      <div class="setting-hint">Generate at <span onclick="openGitHub()">github.com → Settings → Developer settings → Tokens (classic)</span>. Only needs <strong>gist</strong> scope.</div>
     </div>
-
+    <div class="setting-row">
+      <label>Gist ID</label>
+      <input type="text" id="sGistId" placeholder="abc123def456…"/>
+      <div class="setting-hint">From your Gist URL, or click Create Gist to make one automatically.</div>
+    </div>
     <div class="settings-actions">
-      <button class="btn-create-gist" onclick="handleCreateGist()">+ Create Gist</button>
-      <button class="btn-test" onclick="handleTest()">Test Connection</button>
+      <button class="btn-outline-green" onclick="handleCreateGist()">+ Create Gist</button>
+      <button class="btn-outline-green" onclick="handleTest()">Test Connection</button>
       <button class="btn-settings-save" onclick="handleSaveSettings()">Save</button>
     </div>
-
     <div class="status-msg" id="settingsStatus"></div>
   </div>
+</div>
+
+<!-- Quit Sync Overlay -->
+<div id="quitOverlay">
+  <svg class="stair-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56">
+    <defs>
+      <circle id="sb" r="2.4"/>
+      <circle id="sl" r="3.1"/>
+    </defs>
+    <use href="#sb" class="stair-dot-bg" x="6"  y="6"/>  <use href="#sb" class="stair-dot-bg" x="17" y="6"/>
+    <use href="#sb" class="stair-dot-bg" x="28" y="6"/>  <use href="#sb" class="stair-dot-bg" x="39" y="6"/>
+    <use href="#sb" class="stair-dot-bg" x="50" y="6"/>  <use href="#sb" class="stair-dot-bg" x="6"  y="17"/>
+    <use href="#sb" class="stair-dot-bg" x="17" y="17"/> <use href="#sb" class="stair-dot-bg" x="28" y="17"/>
+    <use href="#sb" class="stair-dot-bg" x="39" y="17"/> <use href="#sb" class="stair-dot-bg" x="50" y="17"/>
+    <use href="#sb" class="stair-dot-bg" x="6"  y="28"/> <use href="#sb" class="stair-dot-bg" x="17" y="28"/>
+    <use href="#sb" class="stair-dot-bg" x="28" y="28"/> <use href="#sb" class="stair-dot-bg" x="39" y="28"/>
+    <use href="#sb" class="stair-dot-bg" x="50" y="28"/> <use href="#sb" class="stair-dot-bg" x="6"  y="39"/>
+    <use href="#sb" class="stair-dot-bg" x="17" y="39"/> <use href="#sb" class="stair-dot-bg" x="28" y="39"/>
+    <use href="#sb" class="stair-dot-bg" x="39" y="39"/> <use href="#sb" class="stair-dot-bg" x="50" y="39"/>
+    <use href="#sb" class="stair-dot-bg" x="6"  y="50"/> <use href="#sb" class="stair-dot-bg" x="17" y="50"/>
+    <use href="#sb" class="stair-dot-bg" x="28" y="50"/> <use href="#sb" class="stair-dot-bg" x="39" y="50"/>
+    <use href="#sb" class="stair-dot-bg" x="50" y="50"/>
+    <use href="#sl" class="stair-l d04" x="50" y="6"/>
+    <use href="#sl" class="stair-l d13" x="39" y="17"/>
+    <use href="#sl" class="stair-l d14" x="50" y="17"/>
+    <use href="#sl" class="stair-l d22" x="28" y="28"/>
+    <use href="#sl" class="stair-l d23" x="39" y="28"/>
+    <use href="#sl" class="stair-l d31" x="17" y="39"/>
+    <use href="#sl" class="stair-l d32" x="28" y="39"/>
+    <use href="#sl" class="stair-l d40" x="6"  y="50"/>
+    <use href="#sl" class="stair-l d41" x="17" y="50"/>
+  </svg>
+  <p id="quitMsg">Syncing to cloud…</p>
 </div>
 
 <div id="toast"></div>
 
 <script>
-let state = { columns: [
-  { id:'c1', title:'To Do', cards:[
-    { id:'k1', title:'Design new landing page', tags:[{name:'Design',color:'#a78bfa'}] },
-    { id:'k2', title:'Fix login redirect bug', tags:[{name:'Bug',color:'#f87171'}] },
-  ]},
-  { id:'c2', title:'In Progress', cards:[
-    { id:'k3', title:'Write API documentation', tags:[{name:'Docs',color:'#38bdf8'}] },
-  ]},
-  { id:'c3', title:'Done', cards:[
-    { id:'k4', title:'Set up CI/CD pipeline', tags:[{name:'DevOps',color:'#34d399'}] },
-  ]},
-], lastModified: Date.now() };
+let state = {
+  columns: [
+    { id:'c1', title:'To Do', cards:[
+      { id:'k1', title:'Design new landing page', description:'', tags:[{name:'Design',color:'#a78bfa'}] },
+      { id:'k2', title:'Fix login redirect bug', description:'Session drops after OAuth redirect on Safari.', tags:[{name:'Bug',color:'#f87171'}] },
+    ]},
+    { id:'c2', title:'In Progress', cards:[
+      { id:'k3', title:'Write API documentation', description:'', tags:[{name:'Docs',color:'#38bdf8'}] },
+    ]},
+    { id:'c3', title:'Done', cards:[
+      { id:'k4', title:'Set up CI/CD pipeline', description:'', tags:[{name:'DevOps',color:'#34d399'}] },
+    ]},
+  ],
+  archive: [],
+  lastModified: Date.now(),
+};
 
-let settings = { token: '', gistId: '' };
+let settings = { token:'', gistId:'' };
 let pendingTags=[], editingCard=null, editingColId=null;
+let detailCardId=null, detailColId=null;
 let dragCardId=null, dragColId=null;
 
 function uid(){ return Math.random().toString(36).slice(2,9); }
+function fmtDate(ts){ return new Date(ts).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }
 
 // ── SYNC STATUS ───────────────────────────────────────────────────────────────
 
-function setSyncStatus(state) {
-  const dot   = document.getElementById('syncDot');
-  const label = document.getElementById('syncLabel');
-  dot.className = state;
-  const labels = {
-    'no-config': 'not configured',
-    'syncing':   'syncing…',
-    'synced':    'synced',
-    'error':     'sync error',
-    'local':     'local only',
-  };
-  label.textContent = labels[state] || state;
+function setSyncStatus(s) {
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  dot.className = s;
+  lbl.textContent = { 'no-config':'not configured','syncing':'syncing…','synced':'synced','error':'sync error','local':'local only' }[s] || s;
 }
 
-function showToast(msg, duration=3000) {
+function showToast(msg, dur=3000) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration);
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), dur);
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
@@ -329,44 +430,57 @@ function showToast(msg, duration=3000) {
 async function init() {
   if (!window.kanbanAPI) { render(); return; }
 
-  settings = await window.kanbanAPI.loadSettings() || { token: '', gistId: '' };
+  settings = await window.kanbanAPI.loadSettings() || { token:'', gistId:'' };
 
   if (!settings.token || !settings.gistId) {
     setSyncStatus('no-config');
     const local = await window.kanbanAPI.loadData();
-    if (local) state = local;
-    render();
-    return;
+    if (local) state = migrate(local);
+    render(); return;
   }
 
   setSyncStatus('syncing');
   showToast('Syncing with GitHub Gist…');
-
   const result = await window.kanbanAPI.syncOnStart();
 
   if (result.status === 'pulled') {
-    state = result.data;
-    setSyncStatus('synced');
-    showToast('✓ Board synced from cloud');
+    state = migrate(result.data);
+    setSyncStatus('synced'); showToast('✓ Board synced from cloud');
   } else if (result.status === 'local-newer') {
-    state = result.data;
-    setSyncStatus('synced');
-    showToast('✓ Local board is up to date');
-  } else if (result.status === 'error') {
+    state = migrate(result.data);
+    setSyncStatus('synced'); showToast('✓ Local board is up to date');
+  } else {
     const local = await window.kanbanAPI.loadData();
-    if (local) state = local;
-    setSyncStatus('error');
-    showToast('⚠ Sync failed — using local data', 5000);
+    if (local) state = migrate(local);
+    setSyncStatus('error'); showToast('⚠ Sync failed — using local data', 5000);
   }
-
   render();
 
-  window.addEventListener('beforeunload', pushOnClose);
+  // Listen for quit signal from main process
+  window.kanbanAPI.onBeginQuitSync(handleQuitSync);
 }
 
-async function pushOnClose() {
-  if (!settings.token || !settings.gistId) return;
-  await window.kanbanAPI.syncOnClose(state);
+// Ensure older saved data has the archive array and description fields
+function migrate(data) {
+  if (!data.archive) data.archive = [];
+  data.columns.forEach(col => col.cards.forEach(card => {
+    if (!card.description) card.description = '';
+  }));
+  return data;
+}
+
+// ── QUIT SYNC ─────────────────────────────────────────────────────────────────
+
+async function handleQuitSync() {
+  document.getElementById('quitOverlay').classList.add('open');
+  document.getElementById('quitMsg').textContent = 'Syncing to cloud…';
+  state.lastModified = Date.now();
+  await window.kanbanAPI.saveData(state);
+  const result = await window.kanbanAPI.quitSyncDone(state);
+  if (result && result.status === 'error') {
+    document.getElementById('quitMsg').textContent = 'Sync failed — closing anyway…';
+    await new Promise(r => setTimeout(r, 1500));
+  }
 }
 
 // ── PERSIST ───────────────────────────────────────────────────────────────────
@@ -384,6 +498,7 @@ function render() {
   const board = document.getElementById('board');
   board.innerHTML = '';
   state.columns.forEach(col => {
+    const isDone = col.title.toLowerCase() === 'done';
     const el = document.createElement('div');
     el.className = 'column';
     el.dataset.col = col.id;
@@ -391,7 +506,10 @@ function render() {
       <div class="col-header">
         <div class="col-header-top">
           <span class="col-title">${col.title}</span>
-          <button class="col-del" onclick="deleteColumn('${col.id}')">✕</button>
+          <div class="col-actions">
+            ${isDone ? `<button class="col-btn archive-all" title="Archive all done cards" onclick="archiveAllDone('${col.id}')">Archive All</button>` : ''}
+            <button class="col-btn del" title="Delete column" onclick="deleteColumn('${col.id}')">✕</button>
+          </div>
         </div>
         <div class="col-count">${col.cards.length} ${col.cards.length===1?'task':'tasks'}</div>
       </div>
@@ -399,12 +517,15 @@ function render() {
         ondragover="onDragOver(event,'${col.id}')"
         ondragleave="onDragLeave(event,'${col.id}')"
         ondrop="onDrop(event,'${col.id}')">
-        ${col.cards.map(card=>`
-          <div class="card" draggable="true" id="card-${card.id}"
+        ${col.cards.map(card => `
+          <div class="card" id="card-${card.id}"
+            draggable="true"
             ondragstart="onDragStart(event,'${card.id}','${col.id}')"
             ondragend="onDragEnd()">
+            <span class="card-drag-handle" title="Drag">⠿</span>
             <button class="card-edit" onclick="openCardModal('${col.id}','${card.id}')">✎</button>
-            <div class="card-title">${card.title}</div>
+            <div class="card-title" onclick="openDetail('${col.id}','${card.id}')">${card.title}</div>
+            ${card.description ? `<div class="card-desc-hint">Has description…</div>` : ''}
             <div class="card-tags">${card.tags.map(t=>`
               <span class="tag" style="background:${t.color}22;color:${t.color};border:0.5px solid ${t.color}44">${t.name}</span>
             `).join('')}</div>
@@ -430,14 +551,8 @@ function onDragEnd() {
   document.querySelectorAll('.drop-indicator').forEach(el=>el.classList.remove('active'));
   dragCardId=null; dragColId=null;
 }
-function onDragOver(e, colId) {
-  e.preventDefault();
-  document.getElementById('di-'+colId).classList.add('active');
-}
-function onDragLeave(e, colId) {
-  if (!e.currentTarget.contains(e.relatedTarget))
-    document.getElementById('di-'+colId).classList.remove('active');
-}
+function onDragOver(e, colId) { e.preventDefault(); document.getElementById('di-'+colId).classList.add('active'); }
+function onDragLeave(e, colId) { if(!e.currentTarget.contains(e.relatedTarget)) document.getElementById('di-'+colId).classList.remove('active'); }
 function onDrop(e, toColId) {
   e.preventDefault();
   if (!dragCardId) return;
@@ -449,7 +564,41 @@ function onDrop(e, toColId) {
   onDragEnd(); render(); persist();
 }
 
-// ── CARD MODAL ────────────────────────────────────────────────────────────────
+// ── CARD DETAIL VIEW ──────────────────────────────────────────────────────────
+
+function openDetail(colId, cardId) {
+  detailColId=colId; detailCardId=cardId;
+  const col  = state.columns.find(c=>c.id===colId);
+  const card = col.cards.find(k=>k.id===cardId);
+  document.getElementById('detailColBadge').textContent = col.title;
+  document.getElementById('detailTitle').textContent = card.title;
+  const descEl = document.getElementById('detailDesc');
+  if (card.description) {
+    descEl.textContent = card.description;
+    descEl.className = 'detail-desc';
+  } else {
+    descEl.textContent = 'No description added.';
+    descEl.className = 'detail-desc empty';
+  }
+  document.getElementById('detailTags').innerHTML = card.tags.map(t=>`
+    <span class="tag" style="background:${t.color}22;color:${t.color};border:0.5px solid ${t.color}44">${t.name}</span>
+  `).join('');
+  document.getElementById('detailModal').classList.add('open');
+}
+function closeDetail() {
+  document.getElementById('detailModal').classList.remove('open');
+  detailCardId=null; detailColId=null;
+}
+function editFromDetail() {
+  closeDetail();
+  openCardModal(detailColId, detailCardId);
+}
+function archiveFromDetail() {
+  archiveCard(detailColId, detailCardId);
+  closeDetail();
+}
+
+// ── CARD EDIT MODAL ───────────────────────────────────────────────────────────
 
 function openCardModal(colId, cardId) {
   editingColId=colId; editingCard=cardId||null; pendingTags=[];
@@ -457,11 +606,13 @@ function openCardModal(colId, cardId) {
   if (cardId) {
     const card=state.columns.find(c=>c.id===colId).cards.find(k=>k.id===cardId);
     document.getElementById('cardTitle').value=card.title;
+    document.getElementById('cardDesc').value=card.description||'';
     pendingTags=card.tags.map(t=>({...t}));
     document.getElementById('cardModalTitle').textContent='Edit Card';
     deleteBtn.style.display='block';
   } else {
     document.getElementById('cardTitle').value='';
+    document.getElementById('cardDesc').value='';
     document.getElementById('cardModalTitle').textContent='New Card';
     deleteBtn.style.display='none';
   }
@@ -492,12 +643,13 @@ function removeTag(i) { pendingTags.splice(i,1); renderTags(); }
 function saveCard() {
   const title=document.getElementById('cardTitle').value.trim();
   if (!title) return;
+  const desc=document.getElementById('cardDesc').value.trim();
   const col=state.columns.find(c=>c.id===editingColId);
   if (editingCard) {
     const card=col.cards.find(k=>k.id===editingCard);
-    card.title=title; card.tags=[...pendingTags];
+    card.title=title; card.description=desc; card.tags=[...pendingTags];
   } else {
-    col.cards.push({id:uid(), title, tags:[...pendingTags]});
+    col.cards.push({id:uid(), title, description:desc, tags:[...pendingTags]});
   }
   closeCardModal(); render(); persist();
 }
@@ -505,6 +657,100 @@ function deleteCard() {
   const col=state.columns.find(c=>c.id===editingColId);
   col.cards=col.cards.filter(k=>k.id!==editingCard);
   closeCardModal(); render(); persist();
+}
+
+// ── ARCHIVE ───────────────────────────────────────────────────────────────────
+
+function archiveCard(colId, cardId) {
+  const col=state.columns.find(c=>c.id===colId);
+  const idx=col.cards.findIndex(k=>k.id===cardId);
+  if (idx===-1) return;
+  const [card]=col.cards.splice(idx,1);
+  state.archive.unshift({ ...card, archivedFrom: col.title, archivedAt: Date.now() });
+  render(); persist();
+  showToast('Card archived');
+}
+
+function archiveAllDone(colId) {
+  const col=state.columns.find(c=>c.id===colId);
+  if (!col.cards.length) return;
+  const count=col.cards.length;
+  col.cards.forEach(card => {
+    state.archive.unshift({ ...card, archivedFrom: col.title, archivedAt: Date.now() });
+  });
+  col.cards=[];
+  render(); persist();
+  showToast(`✓ ${count} card${count===1?'':'s'} archived`);
+}
+
+function restoreCard(archiveIdx) {
+  const card=state.archive.splice(archiveIdx,1)[0];
+  const targetCol=state.columns.find(c=>c.title===card.archivedFrom) || state.columns[0];
+  if (!targetCol) { state.archive.unshift(card); return; }
+  const { archivedFrom, archivedAt, ...cardData }=card;
+  targetCol.cards.push(cardData);
+  render(); persist(); renderArchive();
+  showToast(`✓ Restored to "${targetCol.title}"`);
+}
+
+function permDeleteArchived(archiveIdx) {
+  if (!confirm('Permanently delete this card? This cannot be undone.')) return;
+  state.archive.splice(archiveIdx,1);
+  persist(); renderArchive();
+}
+
+function clearArchive() {
+  if (!state.archive.length) return;
+  if (!confirm(`Permanently delete all ${state.archive.length} archived cards? This cannot be undone.`)) return;
+  state.archive=[];
+  persist(); renderArchive();
+}
+
+function openArchive() {
+  document.getElementById('archiveSearch').value='';
+  document.getElementById('archiveDateFilter').value='all';
+  document.getElementById('archivePanel').classList.add('open');
+  renderArchive();
+}
+function closeArchive() { document.getElementById('archivePanel').classList.remove('open'); }
+
+function renderArchive() {
+  const search=document.getElementById('archiveSearch').value.toLowerCase();
+  const dateFilter=document.getElementById('archiveDateFilter').value;
+  const now=Date.now();
+  const weekAgo=now-7*24*60*60*1000;
+  const monthAgo=now-30*24*60*60*1000;
+
+  let items=state.archive.map((card,i)=>({card,i}));
+
+  if (search) items=items.filter(({card})=>card.title.toLowerCase().includes(search)||(card.description||'').toLowerCase().includes(search));
+  if (dateFilter==='week')  items=items.filter(({card})=>card.archivedAt>=weekAgo);
+  if (dateFilter==='month') items=items.filter(({card})=>card.archivedAt>=monthAgo);
+
+  const body=document.getElementById('archiveBody');
+  if (!items.length) {
+    body.innerHTML=`<div class="archive-empty">${state.archive.length?'No cards match your search.':'Nothing archived yet.'}</div>`;
+    return;
+  }
+  body.innerHTML=items.map(({card,i})=>`
+    <div class="archive-card">
+      <div class="archive-card-body">
+        <div class="archive-card-title">${card.title}</div>
+        ${card.description ? `<div class="archive-card-desc">${card.description}</div>` : ''}
+        <div class="archive-card-meta">
+          <span class="archive-card-col">${card.archivedFrom}</span>
+          <span class="archive-card-date">${fmtDate(card.archivedAt)}</span>
+        </div>
+        ${card.tags.length ? `<div class="archive-card-tags">${card.tags.map(t=>`
+          <span class="tag" style="background:${t.color}22;color:${t.color};border:0.5px solid ${t.color}44">${t.name}</span>
+        `).join('')}</div>` : ''}
+      </div>
+      <div class="archive-card-actions">
+        <button class="btn-restore" onclick="restoreCard(${i})">Restore</button>
+        <button class="btn-perm-delete" onclick="permDeleteArchived(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
 }
 
 // ── COLUMN MODAL ──────────────────────────────────────────────────────────────
@@ -528,75 +774,63 @@ function deleteColumn(colId) {
   render(); persist();
 }
 
-// ── SETTINGS ──────────────────────────────────────────────────────────────────
+// ── SETTINGS ─────────────────────────────────────────────────────────────────
 
 function openSettings() {
-  document.getElementById('sToken').value  = settings.token  || '';
-  document.getElementById('sGistId').value = settings.gistId || '';
-  document.getElementById('settingsStatus').className = 'status-msg';
-  document.getElementById('settingsStatus').textContent = '';
+  document.getElementById('sToken').value=settings.token||'';
+  document.getElementById('sGistId').value=settings.gistId||'';
+  document.getElementById('settingsStatus').className='status-msg';
   document.getElementById('settingsPanel').classList.add('open');
 }
-function closeSettings() {
-  document.getElementById('settingsPanel').classList.remove('open');
+function closeSettings() { document.getElementById('settingsPanel').classList.remove('open'); }
+function setSettingsStatus(msg,type) {
+  const el=document.getElementById('settingsStatus');
+  el.textContent=msg; el.className=`status-msg ${type}`;
 }
-
-function setSettingsStatus(msg, type) {
-  const el = document.getElementById('settingsStatus');
-  el.textContent = msg;
-  el.className = `status-msg ${type}`;
-}
-
 async function handleCreateGist() {
-  const token = document.getElementById('sToken').value.trim();
-  if (!token) { setSettingsStatus('Enter your Personal Access Token first.', 'err'); return; }
-  setSettingsStatus('Creating Gist…', 'info');
+  const token=document.getElementById('sToken').value.trim();
+  if (!token) { setSettingsStatus('Enter your token first.','err'); return; }
+  setSettingsStatus('Creating Gist…','info');
   try {
-    const gistId = await window.kanbanAPI.createGist(token);
-    document.getElementById('sGistId').value = gistId;
-    setSettingsStatus(`✓ Gist created! ID: ${gistId}`, 'ok');
-  } catch (e) {
-    setSettingsStatus(`Error: ${e.message}`, 'err');
-  }
+    const id=await window.kanbanAPI.createGist(token);
+    document.getElementById('sGistId').value=id;
+    setSettingsStatus(`✓ Gist created! ID: ${id}`,'ok');
+  } catch(e) { setSettingsStatus(`Error: ${e.message}`,'err'); }
 }
-
 async function handleTest() {
-  const token  = document.getElementById('sToken').value.trim();
-  const gistId = document.getElementById('sGistId').value.trim();
-  if (!token || !gistId) { setSettingsStatus('Fill in both fields first.', 'err'); return; }
-  setSettingsStatus('Testing connection…', 'info');
-  const res = await window.kanbanAPI.testConnection({ token, gistId });
-  if (res.ok) {
-    setSettingsStatus('✓ Connection successful! Gist is reachable.', 'ok');
-  } else {
-    setSettingsStatus(`✗ Failed: ${res.message}`, 'err');
-  }
+  const token=document.getElementById('sToken').value.trim();
+  const gistId=document.getElementById('sGistId').value.trim();
+  if (!token||!gistId) { setSettingsStatus('Fill in both fields first.','err'); return; }
+  setSettingsStatus('Testing connection…','info');
+  const res=await window.kanbanAPI.testConnection({token,gistId});
+  res.ok ? setSettingsStatus('✓ Connection successful!','ok') : setSettingsStatus(`✗ Failed: ${res.message}`,'err');
 }
-
 async function handleSaveSettings() {
-  const token  = document.getElementById('sToken').value.trim();
-  const gistId = document.getElementById('sGistId').value.trim();
-  settings = { token, gistId };
+  const token=document.getElementById('sToken').value.trim();
+  const gistId=document.getElementById('sGistId').value.trim();
+  settings={token,gistId};
   await window.kanbanAPI.saveSettings(settings);
-  setSyncStatus(token && gistId ? 'synced' : 'no-config');
-  setSettingsStatus('✓ Settings saved. They take effect on next launch.', 'ok');
-  setTimeout(closeSettings, 1500);
+  setSyncStatus(token&&gistId?'synced':'no-config');
+  setSettingsStatus('✓ Settings saved.','ok');
+  setTimeout(closeSettings,1500);
 }
-
 function openGitHub() {
   window.open('https://github.com/settings/tokens/new?scopes=gist&description=KanbanApp');
 }
 
 // ── KEYBOARD ──────────────────────────────────────────────────────────────────
 
-document.addEventListener('keydown', e => {
-  if (e.key==='Escape') { closeCardModal(); closeColModal(); closeSettings(); }
+document.addEventListener('keydown', e=>{
+  if (e.key==='Escape') { closeCardModal(); closeColModal(); closeDetail(); closeSettings(); closeArchive(); }
 });
 document.getElementById('tagName').addEventListener('keydown',   e=>{ if(e.key==='Enter'){e.preventDefault();addTag();} });
 document.getElementById('cardTitle').addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();saveCard();} });
 document.getElementById('colName').addEventListener('keydown',   e=>{ if(e.key==='Enter'){e.preventDefault();saveColumn();} });
 document.getElementById('cardModal').addEventListener('click',   e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
 document.getElementById('colModal').addEventListener('click',    e=>{ if(e.target===document.getElementById('colModal')) closeColModal(); });
+document.getElementById('detailModal').addEventListener('click', e=>{ if(e.target===document.getElementById('detailModal')) closeDetail(); });
+document.getElementById('archivePanel').addEventListener('click',e=>{ if(e.target===document.getElementById('archivePanel')) closeArchive(); });
+document.getElementById('settingsPanel').addEventListener('click',e=>{ if(e.target===document.getElementById('settingsPanel')) closeSettings(); });
 
 init();
 </script>

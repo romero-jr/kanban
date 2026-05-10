@@ -6,7 +6,7 @@ const https = require('https');
 const dataPath     = path.join(app.getPath('userData'), 'kanban-data.json');
 const settingsPath = path.join(app.getPath('userData'), 'kanban-settings.json');
 
-// ── Local data ──────────────────────────────────────────────────────────────
+// ── Local data ────────────────────────────────────────────────────────────────
 
 function loadLocal() {
   try {
@@ -20,7 +20,7 @@ function saveLocal(data) {
   fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
 }
 
-// ── Settings ─────────────────────────────────────────────────────────────────
+// ── Settings ──────────────────────────────────────────────────────────────────
 
 function loadSettings() {
   try {
@@ -33,13 +33,13 @@ function saveSettings(settings) {
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
 }
 
-// ── GitHub Gist sync ─────────────────────────────────────────────────────────
+// ── GitHub Gist ───────────────────────────────────────────────────────────────
 
-function githubRequest(method, path, token, body) {
+function githubRequest(method, urlPath, token, body) {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'api.github.com',
-      path,
+      path: urlPath,
       method,
       headers: {
         'Authorization': `token ${token}`,
@@ -82,13 +82,13 @@ async function createGist(token) {
   const res = await githubRequest('POST', '/gists', token, {
     description: 'Kanban App Data',
     public: false,
-    files: { 'kanban-data.json': { content: JSON.stringify({ columns: [], lastModified: Date.now() }, null, 2) } },
+    files: { 'kanban-data.json': { content: JSON.stringify({ columns: [], archive: [], lastModified: Date.now() }, null, 2) } },
   });
   if (res.status !== 201) throw new Error(`GitHub returned ${res.status}`);
   return res.body.id;
 }
 
-// ── Sync logic ────────────────────────────────────────────────────────────────
+// ── Sync ──────────────────────────────────────────────────────────────────────
 
 async function syncOnStart(settings) {
   if (!settings.token || !settings.gistId) return { status: 'no-config' };
@@ -105,7 +105,8 @@ async function syncOnStart(settings) {
   }
 }
 
-async function syncOnClose(settings, data) {
+async function syncOnQuit(data) {
+  const settings = loadSettings();
   if (!settings.token || !settings.gistId) return { status: 'no-config' };
   try {
     await pushGist(settings.token, settings.gistId, data);
@@ -118,6 +119,7 @@ async function syncOnClose(settings, data) {
 // ── Window ────────────────────────────────────────────────────────────────────
 
 let mainWindow;
+let readyToQuit = false;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -143,24 +145,35 @@ app.whenReady().then(() => {
   });
 });
 
+// ── Quit flow: intercept → renderer shows overlay → pushes Gist → signals done
+app.on('before-quit', (e) => {
+  if (readyToQuit) return;
+  e.preventDefault();
+  if (mainWindow) {
+    mainWindow.webContents.send('begin-quit-sync');
+  }
+});
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// ── IPC handlers ──────────────────────────────────────────────────────────────
+// ── IPC ───────────────────────────────────────────────────────────────────────
 
-ipcMain.handle('load-data',      ()         => loadLocal());
-ipcMain.handle('save-data',      (_, data)  => { saveLocal(data); return true; });
-ipcMain.handle('load-settings',  ()         => loadSettings());
-ipcMain.handle('save-settings',  (_, s)     => { saveSettings(s); return true; });
-ipcMain.handle('sync-on-start',  ()         => syncOnStart(loadSettings()));
-ipcMain.handle('sync-on-close',  (_, data)  => syncOnClose(loadSettings(), data));
-ipcMain.handle('create-gist',    (_, token) => createGist(token));
+ipcMain.handle('load-data',       ()          => loadLocal());
+ipcMain.handle('save-data',       (_, data)   => { saveLocal(data); return true; });
+ipcMain.handle('load-settings',   ()          => loadSettings());
+ipcMain.handle('save-settings',   (_, s)      => { saveSettings(s); return true; });
+ipcMain.handle('sync-on-start',   ()          => syncOnStart(loadSettings()));
+ipcMain.handle('create-gist',     (_, token)  => createGist(token));
 ipcMain.handle('test-connection', async (_, { token, gistId }) => {
-  try {
-    await fetchGist(token, gistId);
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, message: e.message };
-  }
+  try { await fetchGist(token, gistId); return { ok: true }; }
+  catch (e) { return { ok: false, message: e.message }; }
+});
+
+// Renderer calls this when it's done syncing and ready to actually quit
+ipcMain.handle('quit-sync-done', async (_, data) => {
+  await syncOnQuit(data);
+  readyToQuit = true;
+  app.quit();
 });
