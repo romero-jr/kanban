@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kanban</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --green: #39ff14; }
+  html, body { height: 100%; background: #0a0a0a; color: #39ff14; font-family: 'Inter', -apple-system, sans-serif; user-select: none; overflow: hidden; }
+
+  body::before { content: ''; position: fixed; width: 500px; height: 500px; background: radial-gradient(circle, rgba(57,255,20,0.07) 0%, transparent 70%); top: -150px; left: -100px; pointer-events: none; z-index: 0; }
+  body::after  { content: ''; position: fixed; width: 400px; height: 400px; background: radial-gradient(circle, rgba(57,255,20,0.05) 0%, transparent 70%); bottom: -100px; right: 0; pointer-events: none; z-index: 0; }
+
+  #titlebar { -webkit-app-region: drag; height: 40px; display: flex; align-items: center; justify-content: center; border-bottom: 0.5px solid rgba(57,255,20,0.1); flex-shrink: 0; position: relative; z-index: 10; }
+  #titlebar span { font-size: 13px; font-weight: 600; color: rgba(57,255,20,0.45); letter-spacing: 0.5px; }
+
+  #app { display: flex; flex-direction: column; height: 100vh; position: relative; z-index: 1; }
+  #header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 10px; flex-shrink: 0; }
+  #header h1 { font-size: 22px; font-weight: 800; color: #39ff14; letter-spacing: -0.8px; }
+
+  .section-label { display: flex; align-items: center; gap: 10px; padding: 0 20px; margin-bottom: 12px; }
+  .section-label::before { content: ''; display: block; width: 20px; height: 1.5px; background: #39ff14; opacity: 0.5; }
+  .section-label span { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; color: rgba(57,255,20,0.45); text-transform: uppercase; }
+
+  #board { flex: 1; overflow-x: auto; overflow-y: hidden; display: flex; gap: 14px; padding: 0 20px 20px; align-items: flex-start; }
+  #board::-webkit-scrollbar { height: 4px; }
+  #board::-webkit-scrollbar-thumb { background: rgba(57,255,20,0.2); border-radius: 4px; }
+
+  .btn-add-col { background: rgba(57,255,20,0.08); border: 0.5px solid rgba(57,255,20,0.4); color: #39ff14; padding: 7px 16px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; font-family: 'Inter', sans-serif; -webkit-app-region: no-drag; }
+  .btn-add-col:hover { background: rgba(57,255,20,0.15); }
+
+  .column { background: rgba(255,255,255,0.04); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 0.5px solid rgba(57,255,20,0.18); border-radius: 18px; width: 230px; min-width: 230px; display: flex; flex-direction: column; max-height: calc(100vh - 130px); overflow: hidden; }
+  .col-header { padding: 14px 16px 12px; border-bottom: 0.5px solid rgba(57,255,20,0.1); flex-shrink: 0; }
+  .col-header-top { display: flex; align-items: center; justify-content: space-between; }
+  .col-title { font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1.5px; text-transform: uppercase; }
+  .col-count { font-size: 11px; font-weight: 400; color: rgba(57,255,20,0.4); margin-top: 4px; }
+  .col-del { background: transparent; border: none; color: rgba(57,255,20,0.22); cursor: pointer; font-size: 14px; padding: 2px 4px; line-height: 1; }
+  .col-del:hover { color: #ff4444; }
+
+  .cards { padding: 10px; display: flex; flex-direction: column; gap: 7px; overflow-y: auto; flex: 1; min-height: 50px; }
+  .cards::-webkit-scrollbar { width: 3px; }
+  .cards::-webkit-scrollbar-thumb { background: rgba(57,255,20,0.15); border-radius: 3px; }
+
+  .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 0.5px solid rgba(255,255,255,0.09); border-radius: 13px; padding: 12px; cursor: grab; position: relative; transition: border-color 0.15s, background 0.15s; }
+  .card:active { cursor: grabbing; }
+  .card:hover { border-color: rgba(57,255,20,0.35); background: rgba(57,255,20,0.06); }
+  .card.dragging { opacity: 0.3; }
+  .card-title { font-size: 13px; font-weight: 400; color: #ddd; line-height: 1.5; padding-right: 22px; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .tag { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; letter-spacing: 0.4px; }
+  .card-edit { position: absolute; top: 9px; right: 9px; background: transparent; border: none; color: rgba(57,255,20,0.2); cursor: pointer; font-size: 13px; }
+  .card-edit:hover { color: #39ff14; }
+  .drop-indicator { height: 3px; border-radius: 2px; background: #39ff14; display: none; margin: 2px 0; box-shadow: 0 0 8px rgba(57,255,20,0.5); }
+  .drop-indicator.active { display: block; }
+
+  .btn-add-card { margin: 0 10px 10px; background: transparent; border: 0.5px dashed rgba(57,255,20,0.2); border-radius: 11px; color: rgba(57,255,20,0.38); padding: 8px; cursor: pointer; font-size: 11px; font-weight: 500; text-align: center; font-family: 'Inter', sans-serif; width: calc(100% - 20px); flex-shrink: 0; }
+  .btn-add-card:hover { border-color: rgba(57,255,20,0.5); color: #39ff14; background: rgba(57,255,20,0.05); }
+
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
+  .overlay.open { display: flex; }
+  .modal { background: rgba(12,12,12,0.96); border: 0.5px solid rgba(57,255,20,0.28); border-radius: 20px; padding: 24px; width: 340px; max-width: 90vw; }
+  .modal h2 { font-size: 16px; font-weight: 700; color: #39ff14; margin-bottom: 20px; letter-spacing: -0.3px; }
+
+  .field { margin-bottom: 14px; }
+  .field label { font-size: 10px; font-weight: 700; color: rgba(57,255,20,0.45); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1.5px; }
+  .field input, .field textarea { width: 100%; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.1); border-radius: 10px; color: #eee; padding: 9px 12px; font-size: 13px; font-weight: 400; font-family: 'Inter', sans-serif; resize: none; outline: none; }
+  .field input:focus, .field textarea:focus { border-color: rgba(57,255,20,0.4); }
+  .field input::placeholder, .field textarea::placeholder { color: rgba(255,255,255,0.18); }
+
+  .tags-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 8px; }
+  .tag-chip { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  .tag-chip button { background: transparent; border: none; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+
+  .color-row { display: flex; gap: 8px; align-items: center; }
+  .color-row input[type=color] { width: 34px; height: 34px; border: 0.5px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; padding: 2px; background: rgba(255,255,255,0.05); flex-shrink: 0; }
+  .color-row input[type=text] { flex: 1; }
+  .btn-add-tag { background: transparent; border: 0.5px solid rgba(57,255,20,0.35); color: #39ff14; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: 600; font-family: 'Inter', sans-serif; flex-shrink: 0; }
+  .btn-add-tag:hover { background: rgba(57,255,20,0.1); }
+
+  .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+  .modal-actions button { flex: 1; padding: 10px; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif; }
+  .btn-save   { background: rgba(57,255,20,0.12); border: 0.5px solid rgba(57,255,20,0.45); color: #39ff14; }
+  .btn-save:hover { background: rgba(57,255,20,0.2); }
+  .btn-cancel { background: transparent; border: 0.5px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.38); }
+  .btn-cancel:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .btn-delete { background: transparent; border: 0.5px solid rgba(255,68,68,0.28); color: rgba(255,68,68,0.55); }
+  .btn-delete:hover { background: rgba(255,68,68,0.08); color: #ff4444; border-color: #ff4444; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="titlebar"><span>kanban</span></div>
+  <div id="header">
+    <h1>Board</h1>
+    <button class="btn-add-col" onclick="openColModal()">+ Add Column</button>
+  </div>
+  <div class="section-label"><span>Active Board</span></div>
+  <div id="board"></div>
+</div>
+
+<div class="overlay" id="cardModal">
+  <div class="modal">
+    <h2 id="cardModalTitle">New Card</h2>
+    <div class="field">
+      <label>Title</label>
+      <textarea id="cardTitle" rows="2" placeholder="What needs doing?"></textarea>
+    </div>
+    <div class="field">
+      <label>Categories</label>
+      <div class="tags-list" id="tagsList"></div>
+      <div class="color-row">
+        <input type="color" id="tagColor" value="#39ff14"/>
+        <input type="text" id="tagName" placeholder="Category name"/>
+        <button class="btn-add-tag" onclick="addTag()">Add</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeCardModal()">Cancel</button>
+      <button class="btn-delete" id="deleteCardBtn" onclick="deleteCard()" style="display:none">Delete</button>
+      <button class="btn-save" onclick="saveCard()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="colModal">
+  <div class="modal">
+    <h2>New Column</h2>
+    <div class="field">
+      <label>Column Name</label>
+      <input type="text" id="colName" placeholder="e.g. In Progress"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeColModal()">Cancel</button>
+      <button class="btn-save" onclick="saveColumn()">Add Column</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let state = { columns: [
+  { id:'c1', title:'To Do', cards:[
+    { id:'k1', title:'Design new landing page', tags:[{name:'Design',color:'#a78bfa'}] },
+    { id:'k2', title:'Fix login redirect bug', tags:[{name:'Bug',color:'#f87171'}] },
+  ]},
+  { id:'c2', title:'In Progress', cards:[
+    { id:'k3', title:'Write API documentation', tags:[{name:'Docs',color:'#38bdf8'}] },
+  ]},
+  { id:'c3', title:'Done', cards:[
+    { id:'k4', title:'Set up CI/CD pipeline', tags:[{name:'DevOps',color:'#34d399'}] },
+  ]},
+]};
+
+let pendingTags=[], editingCard=null, editingColId=null;
+let dragCardId=null, dragColId=null;
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+
+async function persist() {
+  if (window.kanbanAPI) await window.kanbanAPI.saveData(state);
+}
+
+async function init() {
+  if (window.kanbanAPI) {
+    const saved = await window.kanbanAPI.loadData();
+    if (saved) state = saved;
+  }
+  render();
+}
+
+function render() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  state.columns.forEach(col => {
+    const el = document.createElement('div');
+    el.className = 'column';
+    el.dataset.col = col.id;
+    el.innerHTML = `
+      <div class="col-header">
+        <div class="col-header-top">
+          <span class="col-title">${col.title}</span>
+          <button class="col-del" onclick="deleteColumn('${col.id}')">✕</button>
+        </div>
+        <div class="col-count">${col.cards.length} ${col.cards.length===1?'task':'tasks'}</div>
+      </div>
+      <div class="cards" id="cards-${col.id}"
+        ondragover="onDragOver(event,'${col.id}')"
+        ondragleave="onDragLeave(event,'${col.id}')"
+        ondrop="onDrop(event,'${col.id}')">
+        ${col.cards.map(card=>`
+          <div class="card" draggable="true" id="card-${card.id}"
+            ondragstart="onDragStart(event,'${card.id}','${col.id}')"
+            ondragend="onDragEnd()">
+            <button class="card-edit" onclick="openCardModal('${col.id}','${card.id}')">✎</button>
+            <div class="card-title">${card.title}</div>
+            <div class="card-tags">${card.tags.map(t=>`
+              <span class="tag" style="background:${t.color}22;color:${t.color};border:0.5px solid ${t.color}44">${t.name}</span>
+            `).join('')}</div>
+          </div>
+        `).join('')}
+        <div class="drop-indicator" id="di-${col.id}"></div>
+      </div>
+      <button class="btn-add-card" onclick="openCardModal('${col.id}')">+ Add Card</button>
+    `;
+    board.appendChild(el);
+  });
+}
+
+function onDragStart(e, cardId, colId) {
+  dragCardId=cardId; dragColId=colId;
+  e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>{ const el=document.getElementById('card-'+cardId); if(el) el.classList.add('dragging'); },0);
+}
+function onDragEnd() {
+  document.querySelectorAll('.card.dragging').forEach(el=>el.classList.remove('dragging'));
+  document.querySelectorAll('.drop-indicator').forEach(el=>el.classList.remove('active'));
+  dragCardId=null; dragColId=null;
+}
+function onDragOver(e, colId) {
+  e.preventDefault();
+  document.getElementById('di-'+colId).classList.add('active');
+}
+function onDragLeave(e, colId) {
+  if (!e.currentTarget.contains(e.relatedTarget))
+    document.getElementById('di-'+colId).classList.remove('active');
+}
+function onDrop(e, toColId) {
+  e.preventDefault();
+  if (!dragCardId) return;
+  const fromCol=state.columns.find(c=>c.id===dragColId);
+  const toCol=state.columns.find(c=>c.id===toColId);
+  const idx=fromCol.cards.findIndex(k=>k.id===dragCardId);
+  const [card]=fromCol.cards.splice(idx,1);
+  toCol.cards.push(card);
+  onDragEnd(); render(); persist();
+}
+
+function openCardModal(colId, cardId) {
+  editingColId=colId; editingCard=cardId||null; pendingTags=[];
+  const deleteBtn=document.getElementById('deleteCardBtn');
+  if (cardId) {
+    const card=state.columns.find(c=>c.id===colId).cards.find(k=>k.id===cardId);
+    document.getElementById('cardTitle').value=card.title;
+    pendingTags=card.tags.map(t=>({...t}));
+    document.getElementById('cardModalTitle').textContent='Edit Card';
+    deleteBtn.style.display='block';
+  } else {
+    document.getElementById('cardTitle').value='';
+    document.getElementById('cardModalTitle').textContent='New Card';
+    deleteBtn.style.display='none';
+  }
+  renderTags();
+  document.getElementById('cardModal').classList.add('open');
+  setTimeout(()=>document.getElementById('cardTitle').focus(),50);
+}
+function closeCardModal() {
+  document.getElementById('cardModal').classList.remove('open');
+  editingCard=null; editingColId=null; pendingTags=[];
+}
+function renderTags() {
+  document.getElementById('tagsList').innerHTML=pendingTags.map((t,i)=>`
+    <span class="tag-chip" style="background:${t.color}22;border:0.5px solid ${t.color}44">
+      <span style="color:${t.color}">${t.name}</span>
+      <button style="color:${t.color}" onclick="removeTag(${i})">×</button>
+    </span>
+  `).join('');
+}
+function addTag() {
+  const name=document.getElementById('tagName').value.trim();
+  if (!name) return;
+  pendingTags.push({name, color:document.getElementById('tagColor').value});
+  document.getElementById('tagName').value='';
+  renderTags();
+}
+function removeTag(i) { pendingTags.splice(i,1); renderTags(); }
+function saveCard() {
+  const title=document.getElementById('cardTitle').value.trim();
+  if (!title) return;
+  const col=state.columns.find(c=>c.id===editingColId);
+  if (editingCard) {
+    const card=col.cards.find(k=>k.id===editingCard);
+    card.title=title; card.tags=[...pendingTags];
+  } else {
+    col.cards.push({id:uid(), title, tags:[...pendingTags]});
+  }
+  closeCardModal(); render(); persist();
+}
+function deleteCard() {
+  const col=state.columns.find(c=>c.id===editingColId);
+  col.cards=col.cards.filter(k=>k.id!==editingCard);
+  closeCardModal(); render(); persist();
+}
+
+function openColModal() {
+  document.getElementById('colName').value='';
+  document.getElementById('colModal').classList.add('open');
+  setTimeout(()=>document.getElementById('colName').focus(),50);
+}
+function closeColModal() { document.getElementById('colModal').classList.remove('open'); }
+function saveColumn() {
+  const name=document.getElementById('colName').value.trim();
+  if (!name) return;
+  state.columns.push({id:uid(), title:name, cards:[]});
+  closeColModal(); render(); persist();
+}
+function deleteColumn(colId) {
+  const col=state.columns.find(c=>c.id===colId);
+  if (col.cards.length>0 && !confirm('Delete this column and all its cards?')) return;
+  state.columns=state.columns.filter(c=>c.id!==colId);
+  render(); persist();
+}
+
+document.addEventListener('keydown',e=>{
+  if (e.key==='Escape') { closeCardModal(); closeColModal(); }
+});
+document.getElementById('tagName').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();addTag();} });
+document.getElementById('cardTitle').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();saveCard();} });
+document.getElementById('colName').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();saveColumn();} });
+document.getElementById('cardModal').addEventListener('click',e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
+document.getElementById('colModal').addEventListener('click',e=>{ if(e.target===document.getElementById('colModal')) closeColModal(); });
+
+init();
+</script>
+</body>
+</html>

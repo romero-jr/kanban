@@ -1,0 +1,31 @@
+{
+  "name": "kanban",
+  "version": "1.0.0",
+  "description": "Kanban board desktop app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:all": "electron-builder --mac --win"
+  },
+  "build": {
+    "appId": "com.kanban.app",
+    "productName": "Kanban",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "preload.js", "index.html", "icon.icns", "icon.ico", "icon_1024.png"],
+    "mac": {
+      "icon": "icon.icns",
+      "category": "public.app-category.productivity",
+      "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }]
+    },
+    "win": {
+      "icon": "icon.ico",
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  }
+}
