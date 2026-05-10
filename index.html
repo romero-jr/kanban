@@ -7,19 +7,53 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root { --green: #39ff14; }
   html, body { height: 100%; background: #0a0a0a; color: #39ff14; font-family: 'Inter', -apple-system, sans-serif; user-select: none; overflow: hidden; }
 
   body::before { content: ''; position: fixed; width: 500px; height: 500px; background: radial-gradient(circle, rgba(57,255,20,0.07) 0%, transparent 70%); top: -150px; left: -100px; pointer-events: none; z-index: 0; }
   body::after  { content: ''; position: fixed; width: 400px; height: 400px; background: radial-gradient(circle, rgba(57,255,20,0.05) 0%, transparent 70%); bottom: -100px; right: 0; pointer-events: none; z-index: 0; }
 
-  #titlebar { -webkit-app-region: drag; height: 40px; display: flex; align-items: center; justify-content: center; border-bottom: 0.5px solid rgba(57,255,20,0.1); flex-shrink: 0; position: relative; z-index: 10; }
-  #titlebar span { font-size: 13px; font-weight: 600; color: rgba(57,255,20,0.45); letter-spacing: 0.5px; }
+  /* ── TITLEBAR ── */
+  #titlebar {
+    -webkit-app-region: drag;
+    height: 40px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 0.5px solid rgba(57,255,20,0.1);
+    flex-shrink: 0; position: relative; z-index: 10;
+  }
+  #titlebar .tb-title { font-size: 13px; font-weight: 600; color: rgba(57,255,20,0.45); letter-spacing: 0.5px; flex: 1; text-align: center; }
+  #titlebar .tb-left, #titlebar .tb-right { width: 80px; display: flex; align-items: center; }
+  #titlebar .tb-right { justify-content: flex-end; }
 
+  /* ── SYNC STATUS ── */
+  #syncStatus {
+    -webkit-app-region: no-drag;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 500; color: rgba(57,255,20,0.45);
+    cursor: default;
+  }
+  #syncDot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: rgba(57,255,20,0.3);
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  #syncDot.syncing  { background: #facc15; box-shadow: 0 0 6px #facc1580; }
+  #syncDot.synced   { background: #39ff14; box-shadow: 0 0 6px rgba(57,255,20,0.5); }
+  #syncDot.error    { background: #f87171; box-shadow: 0 0 6px #f8717180; }
+  #syncDot.no-config { background: rgba(255,255,255,0.15); }
+
+  /* ── SETTINGS BUTTON ── */
+  #settingsBtn {
+    -webkit-app-region: no-drag;
+    background: transparent; border: none; color: rgba(57,255,20,0.35);
+    cursor: pointer; font-size: 16px; padding: 4px; line-height: 1;
+  }
+  #settingsBtn:hover { color: #39ff14; }
+
+  /* ── LAYOUT ── */
   #app { display: flex; flex-direction: column; height: 100vh; position: relative; z-index: 1; }
   #header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 10px; flex-shrink: 0; }
   #header h1 { font-size: 22px; font-weight: 800; color: #39ff14; letter-spacing: -0.8px; }
-
   .section-label { display: flex; align-items: center; gap: 10px; padding: 0 20px; margin-bottom: 12px; }
   .section-label::before { content: ''; display: block; width: 20px; height: 1.5px; background: #39ff14; opacity: 0.5; }
   .section-label span { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; color: rgba(57,255,20,0.45); text-transform: uppercase; }
@@ -28,9 +62,11 @@
   #board::-webkit-scrollbar { height: 4px; }
   #board::-webkit-scrollbar-thumb { background: rgba(57,255,20,0.2); border-radius: 4px; }
 
+  /* ── BUTTONS ── */
   .btn-add-col { background: rgba(57,255,20,0.08); border: 0.5px solid rgba(57,255,20,0.4); color: #39ff14; padding: 7px 16px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; font-family: 'Inter', sans-serif; -webkit-app-region: no-drag; }
   .btn-add-col:hover { background: rgba(57,255,20,0.15); }
 
+  /* ── COLUMNS ── */
   .column { background: rgba(255,255,255,0.04); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 0.5px solid rgba(57,255,20,0.18); border-radius: 18px; width: 230px; min-width: 230px; display: flex; flex-direction: column; max-height: calc(100vh - 130px); overflow: hidden; }
   .col-header { padding: 14px 16px 12px; border-bottom: 0.5px solid rgba(57,255,20,0.1); flex-shrink: 0; }
   .col-header-top { display: flex; align-items: center; justify-content: space-between; }
@@ -38,11 +74,11 @@
   .col-count { font-size: 11px; font-weight: 400; color: rgba(57,255,20,0.4); margin-top: 4px; }
   .col-del { background: transparent; border: none; color: rgba(57,255,20,0.22); cursor: pointer; font-size: 14px; padding: 2px 4px; line-height: 1; }
   .col-del:hover { color: #ff4444; }
-
   .cards { padding: 10px; display: flex; flex-direction: column; gap: 7px; overflow-y: auto; flex: 1; min-height: 50px; }
   .cards::-webkit-scrollbar { width: 3px; }
   .cards::-webkit-scrollbar-thumb { background: rgba(57,255,20,0.15); border-radius: 3px; }
 
+  /* ── CARDS ── */
   .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 0.5px solid rgba(255,255,255,0.09); border-radius: 13px; padding: 12px; cursor: grab; position: relative; transition: border-color 0.15s, background 0.15s; }
   .card:active { cursor: grabbing; }
   .card:hover { border-color: rgba(57,255,20,0.35); background: rgba(57,255,20,0.06); }
@@ -54,31 +90,29 @@
   .card-edit:hover { color: #39ff14; }
   .drop-indicator { height: 3px; border-radius: 2px; background: #39ff14; display: none; margin: 2px 0; box-shadow: 0 0 8px rgba(57,255,20,0.5); }
   .drop-indicator.active { display: block; }
-
   .btn-add-card { margin: 0 10px 10px; background: transparent; border: 0.5px dashed rgba(57,255,20,0.2); border-radius: 11px; color: rgba(57,255,20,0.38); padding: 8px; cursor: pointer; font-size: 11px; font-weight: 500; text-align: center; font-family: 'Inter', sans-serif; width: calc(100% - 20px); flex-shrink: 0; }
   .btn-add-card:hover { border-color: rgba(57,255,20,0.5); color: #39ff14; background: rgba(57,255,20,0.05); }
 
+  /* ── OVERLAYS ── */
   .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
   .overlay.open { display: flex; }
+
+  /* ── MODAL (card / column) ── */
   .modal { background: rgba(12,12,12,0.96); border: 0.5px solid rgba(57,255,20,0.28); border-radius: 20px; padding: 24px; width: 340px; max-width: 90vw; }
   .modal h2 { font-size: 16px; font-weight: 700; color: #39ff14; margin-bottom: 20px; letter-spacing: -0.3px; }
-
   .field { margin-bottom: 14px; }
   .field label { font-size: 10px; font-weight: 700; color: rgba(57,255,20,0.45); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1.5px; }
   .field input, .field textarea { width: 100%; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.1); border-radius: 10px; color: #eee; padding: 9px 12px; font-size: 13px; font-weight: 400; font-family: 'Inter', sans-serif; resize: none; outline: none; }
   .field input:focus, .field textarea:focus { border-color: rgba(57,255,20,0.4); }
   .field input::placeholder, .field textarea::placeholder { color: rgba(255,255,255,0.18); }
-
   .tags-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 8px; }
   .tag-chip { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
   .tag-chip button { background: transparent; border: none; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
-
   .color-row { display: flex; gap: 8px; align-items: center; }
   .color-row input[type=color] { width: 34px; height: 34px; border: 0.5px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; padding: 2px; background: rgba(255,255,255,0.05); flex-shrink: 0; }
   .color-row input[type=text] { flex: 1; }
   .btn-add-tag { background: transparent; border: 0.5px solid rgba(57,255,20,0.35); color: #39ff14; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: 600; font-family: 'Inter', sans-serif; flex-shrink: 0; }
   .btn-add-tag:hover { background: rgba(57,255,20,0.1); }
-
   .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
   .modal-actions button { flex: 1; padding: 10px; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif; }
   .btn-save   { background: rgba(57,255,20,0.12); border: 0.5px solid rgba(57,255,20,0.45); color: #39ff14; }
@@ -87,11 +121,78 @@
   .btn-cancel:hover { background: rgba(255,255,255,0.05); color: #fff; }
   .btn-delete { background: transparent; border: 0.5px solid rgba(255,68,68,0.28); color: rgba(255,68,68,0.55); }
   .btn-delete:hover { background: rgba(255,68,68,0.08); color: #ff4444; border-color: #ff4444; }
+
+  /* ── SETTINGS PANEL ── */
+  #settingsPanel {
+    position: fixed; inset: 0; z-index: 200;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+  }
+  #settingsPanel.open { display: flex; }
+  .settings-box {
+    background: rgba(10,10,10,0.98); border: 0.5px solid rgba(57,255,20,0.3);
+    border-radius: 24px; padding: 28px; width: 460px; max-width: 92vw;
+  }
+  .settings-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .settings-header h2 { font-size: 17px; font-weight: 700; color: #39ff14; letter-spacing: -0.3px; }
+  .settings-close { background: transparent; border: none; color: rgba(57,255,20,0.35); cursor: pointer; font-size: 20px; line-height: 1; }
+  .settings-close:hover { color: #39ff14; }
+
+  .settings-section { margin-bottom: 24px; }
+  .settings-section-title { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: rgba(57,255,20,0.4); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .settings-section-title::after { content: ''; flex: 1; height: 0.5px; background: rgba(57,255,20,0.15); }
+
+  .setting-row { margin-bottom: 12px; }
+  .setting-row label { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.5); display: block; margin-bottom: 6px; }
+  .setting-row input { width: 100%; background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.1); border-radius: 10px; color: #eee; padding: 10px 12px; font-size: 13px; font-family: 'Inter', sans-serif; outline: none; }
+  .setting-row input:focus { border-color: rgba(57,255,20,0.4); }
+  .setting-row input::placeholder { color: rgba(255,255,255,0.15); }
+
+  .setting-hint { font-size: 11px; font-weight: 400; color: rgba(255,255,255,0.25); margin-top: 5px; line-height: 1.5; }
+  .setting-hint a { color: rgba(57,255,20,0.5); cursor: pointer; text-decoration: underline; }
+
+  .settings-actions { display: flex; gap: 10px; margin-top: 8px; }
+  .settings-actions button { padding: 10px 16px; border-radius: 12px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; }
+  .btn-test { background: transparent; border: 0.5px solid rgba(57,255,20,0.3); color: rgba(57,255,20,0.7); flex: 1; }
+  .btn-test:hover { background: rgba(57,255,20,0.08); color: #39ff14; }
+  .btn-create-gist { background: transparent; border: 0.5px solid rgba(57,255,20,0.3); color: rgba(57,255,20,0.7); flex: 1; }
+  .btn-create-gist:hover { background: rgba(57,255,20,0.08); color: #39ff14; }
+  .btn-settings-save { background: rgba(57,255,20,0.12); border: 0.5px solid rgba(57,255,20,0.45); color: #39ff14; flex: 1; }
+  .btn-settings-save:hover { background: rgba(57,255,20,0.2); }
+
+  .status-msg { font-size: 12px; font-weight: 500; margin-top: 12px; padding: 10px 14px; border-radius: 10px; display: none; }
+  .status-msg.ok    { background: rgba(57,255,20,0.08); border: 0.5px solid rgba(57,255,20,0.25); color: #39ff14; display: block; }
+  .status-msg.err   { background: rgba(248,113,113,0.08); border: 0.5px solid rgba(248,113,113,0.25); color: #f87171; display: block; }
+  .status-msg.info  { background: rgba(56,189,248,0.08); border: 0.5px solid rgba(56,189,248,0.25); color: #38bdf8; display: block; }
+
+  /* ── SYNC TOAST ── */
+  #toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(12,12,12,0.95); border: 0.5px solid rgba(57,255,20,0.25);
+    border-radius: 12px; padding: 10px 18px;
+    font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.7);
+    z-index: 300; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="titlebar"><span>kanban</span></div>
+
+  <div id="titlebar">
+    <div class="tb-left">
+      <div id="syncStatus">
+        <div id="syncDot" class="no-config"></div>
+        <span id="syncLabel">not configured</span>
+      </div>
+    </div>
+    <div class="tb-title">kanban</div>
+    <div class="tb-right">
+      <button id="settingsBtn" onclick="openSettings()" title="Sync Settings">⚙</button>
+    </div>
+  </div>
+
   <div id="header">
     <h1>Board</h1>
     <button class="btn-add-col" onclick="openColModal()">+ Add Column</button>
@@ -100,6 +201,7 @@
   <div id="board"></div>
 </div>
 
+<!-- Card Modal -->
 <div class="overlay" id="cardModal">
   <div class="modal">
     <h2 id="cardModalTitle">New Card</h2>
@@ -124,6 +226,7 @@
   </div>
 </div>
 
+<!-- Column Modal -->
 <div class="overlay" id="colModal">
   <div class="modal">
     <h2>New Column</h2>
@@ -138,6 +241,46 @@
   </div>
 </div>
 
+<!-- Settings Panel -->
+<div id="settingsPanel">
+  <div class="settings-box">
+    <div class="settings-header">
+      <h2>⚙ Sync Settings</h2>
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">GitHub Gist Sync</div>
+
+      <div class="setting-row">
+        <label>Personal Access Token</label>
+        <input type="password" id="sToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"/>
+        <div class="setting-hint">
+          Generate one at <span class="setting-hint a" onclick="openGitHub()">github.com → Settings → Developer settings → Personal access tokens</span>. Only needs the <strong>gist</strong> scope.
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <label>Gist ID</label>
+        <input type="text" id="sGistId" placeholder="abc123def456..."/>
+        <div class="setting-hint">
+          The ID from your Gist URL: gist.github.com/username/<strong>THIS_PART</strong>. Or click "Create Gist" below to make one automatically.
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-actions">
+      <button class="btn-create-gist" onclick="handleCreateGist()">+ Create Gist</button>
+      <button class="btn-test" onclick="handleTest()">Test Connection</button>
+      <button class="btn-settings-save" onclick="handleSaveSettings()">Save</button>
+    </div>
+
+    <div class="status-msg" id="settingsStatus"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
 <script>
 let state = { columns: [
   { id:'c1', title:'To Do', cards:[
@@ -150,24 +293,92 @@ let state = { columns: [
   { id:'c3', title:'Done', cards:[
     { id:'k4', title:'Set up CI/CD pipeline', tags:[{name:'DevOps',color:'#34d399'}] },
   ]},
-]};
+], lastModified: Date.now() };
 
+let settings = { token: '', gistId: '' };
 let pendingTags=[], editingCard=null, editingColId=null;
 let dragCardId=null, dragColId=null;
 
 function uid(){ return Math.random().toString(36).slice(2,9); }
 
-async function persist() {
-  if (window.kanbanAPI) await window.kanbanAPI.saveData(state);
+// ── SYNC STATUS ───────────────────────────────────────────────────────────────
+
+function setSyncStatus(state) {
+  const dot   = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  dot.className = state;
+  const labels = {
+    'no-config': 'not configured',
+    'syncing':   'syncing…',
+    'synced':    'synced',
+    'error':     'sync error',
+    'local':     'local only',
+  };
+  label.textContent = labels[state] || state;
 }
 
-async function init() {
-  if (window.kanbanAPI) {
-    const saved = await window.kanbanAPI.loadData();
-    if (saved) state = saved;
-  }
-  render();
+function showToast(msg, duration=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
 }
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+
+async function init() {
+  if (!window.kanbanAPI) { render(); return; }
+
+  settings = await window.kanbanAPI.loadSettings() || { token: '', gistId: '' };
+
+  if (!settings.token || !settings.gistId) {
+    setSyncStatus('no-config');
+    const local = await window.kanbanAPI.loadData();
+    if (local) state = local;
+    render();
+    return;
+  }
+
+  setSyncStatus('syncing');
+  showToast('Syncing with GitHub Gist…');
+
+  const result = await window.kanbanAPI.syncOnStart();
+
+  if (result.status === 'pulled') {
+    state = result.data;
+    setSyncStatus('synced');
+    showToast('✓ Board synced from cloud');
+  } else if (result.status === 'local-newer') {
+    state = result.data;
+    setSyncStatus('synced');
+    showToast('✓ Local board is up to date');
+  } else if (result.status === 'error') {
+    const local = await window.kanbanAPI.loadData();
+    if (local) state = local;
+    setSyncStatus('error');
+    showToast('⚠ Sync failed — using local data', 5000);
+  }
+
+  render();
+
+  window.addEventListener('beforeunload', pushOnClose);
+}
+
+async function pushOnClose() {
+  if (!settings.token || !settings.gistId) return;
+  await window.kanbanAPI.syncOnClose(state);
+}
+
+// ── PERSIST ───────────────────────────────────────────────────────────────────
+
+async function persist() {
+  if (window.kanbanAPI) {
+    state.lastModified = Date.now();
+    await window.kanbanAPI.saveData(state);
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
 
 function render() {
   const board = document.getElementById('board');
@@ -207,6 +418,8 @@ function render() {
   });
 }
 
+// ── DRAG & DROP ───────────────────────────────────────────────────────────────
+
 function onDragStart(e, cardId, colId) {
   dragCardId=cardId; dragColId=colId;
   e.dataTransfer.effectAllowed='move';
@@ -235,6 +448,8 @@ function onDrop(e, toColId) {
   toCol.cards.push(card);
   onDragEnd(); render(); persist();
 }
+
+// ── CARD MODAL ────────────────────────────────────────────────────────────────
 
 function openCardModal(colId, cardId) {
   editingColId=colId; editingCard=cardId||null; pendingTags=[];
@@ -292,6 +507,8 @@ function deleteCard() {
   closeCardModal(); render(); persist();
 }
 
+// ── COLUMN MODAL ──────────────────────────────────────────────────────────────
+
 function openColModal() {
   document.getElementById('colName').value='';
   document.getElementById('colModal').classList.add('open');
@@ -311,14 +528,75 @@ function deleteColumn(colId) {
   render(); persist();
 }
 
-document.addEventListener('keydown',e=>{
-  if (e.key==='Escape') { closeCardModal(); closeColModal(); }
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+
+function openSettings() {
+  document.getElementById('sToken').value  = settings.token  || '';
+  document.getElementById('sGistId').value = settings.gistId || '';
+  document.getElementById('settingsStatus').className = 'status-msg';
+  document.getElementById('settingsStatus').textContent = '';
+  document.getElementById('settingsPanel').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settingsPanel').classList.remove('open');
+}
+
+function setSettingsStatus(msg, type) {
+  const el = document.getElementById('settingsStatus');
+  el.textContent = msg;
+  el.className = `status-msg ${type}`;
+}
+
+async function handleCreateGist() {
+  const token = document.getElementById('sToken').value.trim();
+  if (!token) { setSettingsStatus('Enter your Personal Access Token first.', 'err'); return; }
+  setSettingsStatus('Creating Gist…', 'info');
+  try {
+    const gistId = await window.kanbanAPI.createGist(token);
+    document.getElementById('sGistId').value = gistId;
+    setSettingsStatus(`✓ Gist created! ID: ${gistId}`, 'ok');
+  } catch (e) {
+    setSettingsStatus(`Error: ${e.message}`, 'err');
+  }
+}
+
+async function handleTest() {
+  const token  = document.getElementById('sToken').value.trim();
+  const gistId = document.getElementById('sGistId').value.trim();
+  if (!token || !gistId) { setSettingsStatus('Fill in both fields first.', 'err'); return; }
+  setSettingsStatus('Testing connection…', 'info');
+  const res = await window.kanbanAPI.testConnection({ token, gistId });
+  if (res.ok) {
+    setSettingsStatus('✓ Connection successful! Gist is reachable.', 'ok');
+  } else {
+    setSettingsStatus(`✗ Failed: ${res.message}`, 'err');
+  }
+}
+
+async function handleSaveSettings() {
+  const token  = document.getElementById('sToken').value.trim();
+  const gistId = document.getElementById('sGistId').value.trim();
+  settings = { token, gistId };
+  await window.kanbanAPI.saveSettings(settings);
+  setSyncStatus(token && gistId ? 'synced' : 'no-config');
+  setSettingsStatus('✓ Settings saved. They take effect on next launch.', 'ok');
+  setTimeout(closeSettings, 1500);
+}
+
+function openGitHub() {
+  window.open('https://github.com/settings/tokens/new?scopes=gist&description=KanbanApp');
+}
+
+// ── KEYBOARD ──────────────────────────────────────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') { closeCardModal(); closeColModal(); closeSettings(); }
 });
-document.getElementById('tagName').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();addTag();} });
-document.getElementById('cardTitle').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();saveCard();} });
-document.getElementById('colName').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();saveColumn();} });
-document.getElementById('cardModal').addEventListener('click',e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
-document.getElementById('colModal').addEventListener('click',e=>{ if(e.target===document.getElementById('colModal')) closeColModal(); });
+document.getElementById('tagName').addEventListener('keydown',   e=>{ if(e.key==='Enter'){e.preventDefault();addTag();} });
+document.getElementById('cardTitle').addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();saveCard();} });
+document.getElementById('colName').addEventListener('keydown',   e=>{ if(e.key==='Enter'){e.preventDefault();saveColumn();} });
+document.getElementById('cardModal').addEventListener('click',   e=>{ if(e.target===document.getElementById('cardModal')) closeCardModal(); });
+document.getElementById('colModal').addEventListener('click',    e=>{ if(e.target===document.getElementById('colModal')) closeColModal(); });
 
 init();
 </script>
